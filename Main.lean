@@ -25,21 +25,21 @@ open Lean
 /-- The main entry point. See `help` for more information on arguments. -/
 unsafe def main (args : List String) : IO UInt32 := do
   match args with
-  | [mainModuleName] =>
+  | [mainString] =>
     match (← IO.getEnv "LEAN_SRC_PATH") with
     | none => /- TODO: imitate Lake.CLI.env more robustly -/
       let child ← IO.Process.spawn {
         cmd := (← IO.appPath).toString
-        args := #[ mainModuleName ]
+        args := #[ mainString ]
         env := #[ ("LEAN_SRC_PATH", some "./.") ]
       }
       child.wait
     | _ => /- We have all necessary vars -/
       initSearchPath (← findSysroot)
       let srcSearchPath ← initSrcSearchPath
-      let mainModuleName := String.toName mainModuleName
+      let mainModuleName := String.toName mainString
       enableInitializersExecution
-      let ast ← ASTExport.getASTForModule srcSearchPath mainModuleName
+      let ast ← ASTExport.getASTForModule srcSearchPath mainString mainModuleName
       let stdout ← IO.getStdout
       stdout.writeJson (toJson ast)
       return 0
